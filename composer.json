@@ -3,7 +3,8 @@
     "description": "An ODM built on the Pixie query builder",
     "type": "library",
     "require": {
-        "usmanhalalit/pixie": "2.*@dev"
+        "usmanhalalit/pixie": "2.*@dev",
+        "vlucas/phpdotenv": "^3.4"
     },
     "require-dev": {
         "phpunit/phpunit": "^8.2"
@@ -17,7 +18,10 @@
     ],
     "autoload": {
         "psr-4": {
-            "App\\": "app/"
+            "Faerie\\": "src/"
         }
+    },
+    "config": {
+        "optimize-autoloader": true
     }
 }
