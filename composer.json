@@ -1,6 +1,6 @@
 {
     "name": "pam/faerie",
-    "description": "An ODM built on the Pixie query builder",
+    "description": "Wrapper and model base for the Pixie query builder",
     "type": "library",
     "require": {
         "usmanhalalit/pixie": "2.*@dev",
