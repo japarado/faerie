@@ -4,18 +4,22 @@ namespace Faerie\Models;
 
 use Carbon\Carbon;
 use Faerie\Database\Connector;
+use Faerie\Relationships\Relationship;
 
 abstract class Model 
 {
-    protected static $table;
-    protected static $hasCreateTimestamp = false;
-    protected static $hasUpdateTimestamp = false;
-    protected static $hasDeleteTimestamp = false;
-    protected static $createTimestamp = 'created_at';
-    protected static $updateTimestamp = 'updated_at';
-    protected static $deleteTimestamp = 'deleted_at';
+    use Relationship;
 
-    protected static $pk = 'id';
+    public static $table;
+    public static $hasCreateTimestamp = false;
+    public static $hasUpdateTimestamp = false;
+    public static $hasDeleteTimestamp = false;
+    public static $createTimestamp = 'created_at';
+    public static $updateTimestamp = 'updated_at';
+    public static $deleteTimestamp = 'deleted_at';
+    public static $pk = 'id';
+
+    public static $dbFieldCache = [];
 
     public function setAttrs($attrs)
     {
@@ -43,6 +47,11 @@ abstract class Model
     public static function all()
     {
         return Connector::TabledInstance(static::$table)->select('*')->get();;
+    }
+
+    public static function findById($id)
+    {
+        return Connector::TabledInstance(static::$table)->where(static::$pk, $id)->first();
     }
 
     public static function where($key, $operator = null, $value = null)
@@ -330,6 +339,23 @@ abstract class Model
         }
 
         return $data;
+    }
+
+    // Helper functions 
+    public static function getDbFields(string $table_name)
+    {
+        if(!static::$dbFieldCache)
+        {
+            $query = Connector::TabledInstance($table_name)->first();
+            $columns = [];
+            foreach($query as $key => $value)
+            {
+                array_push($columns, $key);
+            }
+            static::$dbFieldCache = $columns;
+        }
+
+        return static::$dbFieldCache;
     }
 }
 
