@@ -51,6 +51,18 @@ trait Relationship
         return static::filterColumnsByTable($parent_table, $query->get());
     }
 
+    /* public function belongsToMany(string $parent_table, string $pivot_table, string $foreign_key, string $other_key) */
+    /* { */
+    /*     $current_table = static::$table; */
+    /*     $current_table_pk = static::$pk; */
+
+    /*     $parent_table_pk = ($parent_table)::$pk; */
+
+    /*     $qb = Connector::TabledInstance(static::$table); */
+    /*     $query = $qb->join('postmeta', 'postmeta.post_id', '=', 'posts.ID'); */
+    /*     die($query->getQuery()->getRawSql()); */
+    /* } */
+
     private static function filterColumnsByTable(string $table_name, $query_results = null)
     {
         $data_columns = static::getDbFields($table_name);
