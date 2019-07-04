@@ -13,6 +13,26 @@ abstract class Model implements ModelInterface
         'create' => 'created_at',
         'update' => 'updated_at',
     ];
+
+    protected $pk = 'id';
+
+    public function __set($name, $value)
+    {
+        if($name == 'atts')
+        {
+            foreach($value as $attribute => $value)
+            {
+                $this->$attribute = $value;
+            }
+        }
+        else 
+        {
+            $class_name = static::class;
+            throw new \Exception("Assigning member variale $name to $class_name is not 
+                permitted. Assign to +{$class_name}::atts instead");
+        }
+    }
+
     protected static $QBInstance = null;
 
     public static function all()
@@ -245,6 +265,26 @@ abstract class Model implements ModelInterface
         $result = Connector::TabledInstance(static::$table)->getBindings();
         static::reset();
         return $result;
+    }
+
+    // Instance methods 
+    public function save()
+    {
+        $attributes = get_object_vars($this);
+        $qb = Connector::TabledInstance(static::$table);
+        $qb->insert($attributes);
+    }
+
+    public function destroy()
+    {
+        $attributes = get_object_vars($this);
+        $qb = Connector::TabledInstance(static::$table);
+        foreach($attributes as $attribute => $value)
+        {
+            $qb = $qb->where($attribute, $value);
+        }
+        $deletedIds = $qb->delete();
+        return $deletedIds;
     }
 
     private static function reset()
