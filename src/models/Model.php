@@ -2,34 +2,39 @@
 
 namespace Faerie\Models;
 
-use Faerie\Models\ModelInterface;
+use Carbon\Carbon;
 use Faerie\Database\Connector;
 
-abstract class Model implements ModelInterface
+abstract class Model 
 {
     protected static $table;
-    protected static $hasTimestamps = false;
-    protected static $timestamps = [
-        'create' => 'created_at',
-        'update' => 'updated_at',
-    ];
+    protected static $hasCreateTimestamp = false;
+    protected static $hasUpdateTimestamp = false;
+    protected static $hasDeleteTimestamp = false;
+    protected static $createTimestamp = 'created_at';
+    protected static $updateTimestamp = 'updated_at';
+    protected static $deleteTimestamp = 'deleted_at';
 
-    protected $pk = 'id';
+    protected static $pk = 'id';
 
-    public function __set($name, $value)
+    public function setAttrs($attrs)
     {
-        if($name == 'atts')
+        if(gettype($attrs) == 'object')
         {
-            foreach($value as $attribute => $value)
-            {
-                $this->$attribute = $value;
-            }
+            $attrs = (array) $attrs;
         }
         else 
         {
-            $class_name = static::class;
-            throw new \Exception("Assigning member variale $name to $class_name is not 
-                permitted. Assign to +{$class_name}::atts instead");
+            $attrs = [];
+        }
+
+        if(count($attrs) > 0)
+        {
+            foreach($attrs as $key => $value)
+            {
+                $this->$key = $value;
+            }
+
         }
     }
 
@@ -54,7 +59,7 @@ abstract class Model implements ModelInterface
     }
 
     public static function whereNot($key, $operator = null, $value = null)
-    {
+    { 
         if(func_num_args() == 2)
         {
             $value = $operator;
@@ -222,6 +227,13 @@ abstract class Model implements ModelInterface
 
     public function insert(array $data)
     {
+        if(static::$hasCreateTimestamp)
+        {
+            if(static::$createTimestamp)
+            {
+                $data[static::$createTimestamp] = Carbon::now();
+            }
+        }
         $result = Connector::TabledInstance(static::$table)->insert($data);
         static::reset();
         return $result;
@@ -271,6 +283,7 @@ abstract class Model implements ModelInterface
     public function save()
     {
         $attributes = get_object_vars($this);
+        $attributes = static::assignTimestamps($attributes);
         $qb = Connector::TabledInstance(static::$table);
         $qb->insert($attributes);
     }
@@ -278,18 +291,45 @@ abstract class Model implements ModelInterface
     public function destroy()
     {
         $attributes = get_object_vars($this);
-        $qb = Connector::TabledInstance(static::$table);
-        foreach($attributes as $attribute => $value)
+        $attributes = static::assignTimestamps($attributes);
+
+        if(count($attributes) > 0)
         {
-            $qb = $qb->where($attribute, $value);
+            $qb = Connector::TabledInstance(static::$table);
+            foreach($attributes as $attribute => $value)
+            {
+                $qb = $qb->where($attribute, $value);
+            }
+            $deletedIds = $qb->delete();
+            return $deletedIds;
         }
-        $deletedIds = $qb->delete();
-        return $deletedIds;
+        else 
+        {
+            return false;
+        }
     }
 
     private static function reset()
     {
         static::$QBInstance = null;
+    }
+
+    private static function assignTimestamps(array $data)
+    {
+        if(static::$hasCreateTimestamp && !isset($data[static::$createTimestamp]))
+        {
+            $data[static::$createTimestamp] = Carbon::now();
+        }
+        if(static::$hasUpdateTimestamp && !isset($data[static::$updateTimestamp]))
+        {
+            $data[static::$updateTimestamp] = Carbon::now();
+        }
+        if(static::$hasDeleteTimestamp && !isset($data[static::$hasDeleteTimestamp]))
+        {
+            $data[static::$hasDeleteTimestamp] = Carbon::now();
+        }
+
+        return $data;
     }
 }
 
